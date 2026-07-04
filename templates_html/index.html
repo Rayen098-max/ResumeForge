@@ -1196,14 +1196,16 @@
       // Redraw preview using fresh response representation
       renderPreviewHTML(resume_data);
 
+      // Always proceed to Step 4 to allow downloads, do not lock the user
+      goToSection('sec-preview', 4);
+
       if (data.has_warnings) {
-        // Redraw updated warning list if it still overflows
+        // Redraw updated warning list
         renderEditorWarnings(data.warnings, data.overflow);
-        showToast('⚠ Resume compiled but still overflows 1 page. Adjust edits.');
+        showToast('⚠ Compiled! Note: Resume may exceed 1 page limit.');
       } else {
-        // Successful fit, proceed to Step 4
+        // Successful fit
         document.getElementById('editor-warnings-card').style.display = 'none';
-        goToSection('sec-preview', 4);
         showToast('✓ Compilation successful! Clean 1-page document ready.');
       }
 
