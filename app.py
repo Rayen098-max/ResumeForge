@@ -252,7 +252,7 @@ def api_tailor():
     """
     Directly triggers the AI tailoring flow.
     Receives template_id + job_description + optional custom_instructions.
-    Calls Gemini API, reframes content, generates temporary files, and returns data + warnings.
+    Calls Gemini API with fallback rotation on multi-keys, reframes content, and returns data.
     """
     cleanup_outputs_dir()
 
@@ -264,10 +264,14 @@ def api_tailor():
     if not template_id or not job_description:
         return jsonify({"error": "Missing template_id or job_description"}), 400
 
-    # Retrieve API key
-    api_key = request.headers.get("X-Gemini-Key") or os.environ.get("GEMINI_API_KEY")
-    if not api_key:
+    # Retrieve API keys (comma-separated support)
+    keys_raw = request.headers.get("X-Gemini-Key") or os.environ.get("GEMINI_API_KEY")
+    if not keys_raw:
         return jsonify({"error": "Missing Gemini API Key. Please enter it in the key input field or set GEMINI_API_KEY on the server."}), 401
+
+    api_keys = [k.strip() for k in keys_raw.split(",") if k.strip()]
+    if not api_keys:
+        return jsonify({"error": "No valid Gemini API keys found. Check your keys list."}), 401
 
     # Template path
     template_path = os.path.join(TEMPLATES_DIR, template_id + ".docx")
@@ -279,24 +283,62 @@ def api_tailor():
     if custom_instructions:
         full_prompt += "\n\nAdditional Requirements / Focus Areas:\n" + custom_instructions
 
-    # Call Gemini REST API
+    # Call Gemini REST API with key rotation
     import requests
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
-    headers = {"Content-Type": "application/json"}
-    payload = {
-        "contents": [{"parts": [{"text": full_prompt}]}],
-        "generationConfig": {"responseMimeType": "application/json"}
-    }
+    res_data = None
+    successful_key_idx = -1
+    last_error_msg = "Unknown error"
 
-    try:
-        res = requests.post(url, json=payload, headers=headers, timeout=60)
-        res_data = res.json()
-    except Exception as e:
-        return jsonify({"error": f"Gemini API network/timeout error: {str(e)}"}), 500
+    for idx, api_key in enumerate(api_keys):
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+        headers = {"Content-Type": "application/json"}
+        payload = {
+            "contents": [{"parts": [{"text": full_prompt}]}],
+            "generationConfig": {"responseMimeType": "application/json"}
+        }
 
-    if "candidates" not in res_data or not res_data["candidates"]:
-        err_msg = res_data.get("error", {}).get("message", "Unknown Gemini API error")
-        return jsonify({"error": f"Gemini API Error: {err_msg}"}), 400
+        try:
+            res = requests.post(url, json=payload, headers=headers, timeout=60)
+            status_code = res.status_code
+            try:
+                data_json = res.json()
+            except Exception:
+                data_json = {}
+        except Exception as e:
+            last_error_msg = f"Network connection failed on key #{idx+1}: {str(e)}"
+            continue
+
+        # Check if rate-limited (429) or resource exhaustion error is in response body
+        is_quota_error = False
+        if status_code == 429:
+            is_quota_error = True
+        elif "error" in data_json:
+            err = data_json["error"]
+            err_code = err.get("code")
+            err_status = err.get("status", "")
+            err_msg = err.get("message", "")
+            if err_code == 429 or err_status == "RESOURCE_EXHAUSTED" or "quota" in err_msg.lower():
+                is_quota_error = True
+            else:
+                last_error_msg = f"API Error on key #{idx+1}: {err_msg}"
+
+        if is_quota_error:
+            last_error_msg = f"Rate limit / Quota hit on key #{idx+1}"
+            continue
+
+        # Verify candidates are returned
+        if "candidates" in data_json and data_json["candidates"]:
+            res_data = data_json
+            successful_key_idx = idx
+            break
+        else:
+            if "error" in data_json:
+                last_error_msg = data_json["error"].get("message", "No content candidates found")
+            else:
+                last_error_msg = f"Empty response on key #{idx+1}"
+
+    if res_data is None:
+        return jsonify({"error": f"All Gemini API keys failed or hit limits. Last message: {last_error_msg}"}), 400
 
     # Parse candidate text
     try:
@@ -354,8 +396,10 @@ def api_tailor():
         "resume_data": resume_data,
         "warnings": warnings,
         "has_warnings": len(warnings) > 0,
-        "overflow": f"Resume is overflowing onto page {page_count}. Suggested minimum cuts shown below." if page_count > 1 else None
+        "overflow": f"Resume is overflowing onto page {page_count}. Suggested minimum cuts shown below." if page_count > 1 else None,
+        "key_index_used": successful_key_idx
     })
+
 
 
 @app.route("/api/compile", methods=["POST"])

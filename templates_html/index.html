@@ -670,13 +670,13 @@
 
       <!-- GEMINI KEY INPUT -->
       <div class="api-key-config">
-        <label>Gemini API Key</label>
+        <label>Gemini API Keys</label>
         <div class="api-key-row">
-          <input type="password" id="api-key-input" placeholder="Paste free API key...">
+          <input type="password" id="api-key-input" placeholder="key1, key2, key3...">
           <button class="btn btn-secondary" onclick="saveApiKey()">Save</button>
         </div>
         <div style="font-size: 8.5px; color: var(--muted); margin-top: 5px; line-height: 1.3;">
-          Required for tailoring. Generate a free key at <a href="https://aistudio.google.com/" target="_blank" style="color: var(--accent); text-decoration: none;">Google AI Studio</a>.
+          Paste comma-separated keys for auto-failover. Get keys from <a href="https://aistudio.google.com/" target="_blank" style="color: var(--accent); text-decoration: none;">Google AI Studio</a>.
         </div>
       </div>
 
@@ -988,7 +988,11 @@
 
       // Go to Step 3: Editor
       goToSection('sec-editor', 3);
-      showToast('✓ AI tailoring complete! Review edits.');
+      if (data.key_index_used > 0) {
+        showToast(`⚡ Rate limit hit. Rotated to Key #${data.key_index_used + 1}!`);
+      } else {
+        showToast('✓ AI tailoring complete! Review edits.');
+      }
 
     } catch (e) {
       showToast('⚠ Network error: ' + e.message);
