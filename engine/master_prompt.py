@@ -21,6 +21,15 @@ If the role is HR → everything sounds people-focused: "assessed team dynamics 
 Be creative, be bold, be believable. The projects are real — only the framing changes. A telemedicine project for a sales role should sound like you were selling healthcare solutions to rural communities.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CRITICAL — ONE-PAGE LENGTH OPTIMIZATION RULE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. The output resume must fit on EXACTLY ONE PAGE. Be extremely concise.
+2. If a project is not highly relevant to the target job description, set "include": false in the JSON to completely exclude it.
+3. For the projects you include, limit bullets to 2 concise, high-impact items instead of 3 if the content is long or if it helps fit the document on one page. Bullet points must be short (max 1.5 lines each).
+4. Shorten the "profile_summary" to 2 sentences max. Keep it dense and punchy.
+5. If the job description is very specific, strip out any generic certifications or extracurriculars that don't add value to this role.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 RULES:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 1. Output ONLY valid JSON. Zero text before or after it. No markdown. No explanation.

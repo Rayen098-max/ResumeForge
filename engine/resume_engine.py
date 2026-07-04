@@ -38,14 +38,14 @@ def _get_non_bold_text(para):
 def set_para_text_preserve_format(para, new_text):
     """Replace all runs with one consolidated run. Keeps first run's rPr (format)."""
     runs = para.findall(f"{{{W}}}r")
-    if not runs:
-        return
-    rpr = runs[0].find(f"{{{W}}}rPr")
-    for r in runs:
-        para.remove(r)
     for tag in [f"{{{W}}}proofErr", f"{{{W}}}bookmarkStart", f"{{{W}}}bookmarkEnd"]:
         for elem in para.findall(tag):
             para.remove(elem)
+    rpr = None
+    if runs:
+        rpr = runs[0].find(f"{{{W}}}rPr")
+        for r in runs:
+            para.remove(r)
     new_run = etree.SubElement(para, f"{{{W}}}r")
     if rpr is not None:
         new_run.insert(0, copy.deepcopy(rpr))
@@ -211,6 +211,7 @@ def map_document_structure(body):
         "extracurricular_start": None,
         "extracurricular_items": [],
         "languages_idx": None,
+        "continuation_paragraphs": [],
     }
     in_projects = False
     in_extracurriculars = False
@@ -264,8 +265,15 @@ def map_document_structure(body):
             structure["project_blocks"].append(current_project)
 
         elif tag == "p" and in_projects and _get_style(child) == "ListParagraph":
-            if current_project is not None:
-                current_project["bullet_indices"].append(i)
+            pPr = child.find(f"{{{W}}}pPr")
+            has_num = False
+            if pPr is not None and pPr.find(f"{{{W}}}numPr") is not None:
+                has_num = True
+            if has_num:
+                if current_project is not None:
+                    current_project["bullet_indices"].append(i)
+            else:
+                structure["continuation_paragraphs"].append(i)
 
         elif tag == "p" and in_extracurriculars and _get_style(child) != "Heading2":
             if len(text) > 20 and ("-" in text or "—" in text or "–" in text):
@@ -350,8 +358,9 @@ def apply_json_to_docx(template_path, output_path, json_data):
 
     # ── 4. CERTIFICATIONS (fully dynamic) ────────────────────
     # AI picks exactly 4 from pool. Each cert has name, provider, year, description.
-    # Unused slots are removed immediately.
+    # Unused slots or empty slots (manually cleared by user) are removed immediately.
     cert_data = json_data.get("certifications", [])
+    cert_data = [c for c in cert_data if c.get("name", "").strip()]
     cert_blocks = structure["cert_blocks"]   # slots 1-3 outside table
     table_cert_desc_idx = find_table_cert_desc(body)
 
@@ -375,15 +384,29 @@ def apply_json_to_docx(template_path, output_path, json_data):
             immediate_remove.extend([block["title_idx"], block["provider_idx"], block["desc_idx"]])
 
     # ── 5. PROJECTS ───────────────────────────────────────────
+    # Irrelevant projects (include: false) or empty projects (name cleared) are removed.
+    # Any cleared/empty bullets are removed to fit on one page.
     proj_data = json_data.get("projects", [])
     for pi, proj_json in enumerate(proj_data):
         if pi >= len(structure["project_blocks"]):
             break
         block = structure["project_blocks"][pi]
-        new_bullets = proj_json.get("bullets", [])
-        for bi, bullet_idx in enumerate(block["bullet_indices"]):
-            if bi < len(new_bullets):
-                set_para_text_preserve_format(children[bullet_idx], new_bullets[bi])
+        
+        name = proj_json.get("name", "").strip()
+        include = proj_json.get("include", True)
+        
+        if not name or not include:
+            immediate_remove.append(block["title_idx"])
+            immediate_remove.extend(block["bullet_indices"])
+        else:
+            new_bullets = proj_json.get("bullets", [])
+            active_bullets = [b.strip() for b in new_bullets if b.strip()]
+            for bi, bullet_idx in enumerate(block["bullet_indices"]):
+                if bi < len(active_bullets):
+                    set_para_text_preserve_format(children[bullet_idx], active_bullets[bi])
+                else:
+                    immediate_remove.append(bullet_idx)
+
     # ── Fix Extracurricular heading spacing (restores bottom line) ────
     if structure["extracurricular_start"] is not None:
         h_para = children[structure["extracurricular_start"]]
@@ -396,13 +419,15 @@ def apply_json_to_docx(template_path, output_path, json_data):
                 pst.addnext(sp)
             else:
                 h_pPr.insert(0, sp)
+
     # ── 6. EXTRACURRICULARS ───────────────────────────────────
-    # Hard cap at 3. Guard prevents removing anything adjacent to Languages heading.
+    # Empty extracurricular lines are purged immediately.
     extrac_data = json_data.get("extracurriculars", [])[:3]
+    extrac_data = [e for e in extrac_data if e.get("full_line", "").strip()]
     lang_boundary = structure.get("languages_idx", len(children))
     for ei, item_idx in enumerate(structure["extracurricular_items"]):
         if ei < len(extrac_data):
-            line = extrac_data[ei].get("full_line", "")
+            line = extrac_data[ei].get("full_line", "").strip()
             if line:
                 if ei == 0:
                     update_extracurricular_in_place(children[item_idx], line)
@@ -413,7 +438,11 @@ def apply_json_to_docx(template_path, output_path, json_data):
             if item_idx < lang_boundary:
                 immediate_remove.append(item_idx)
 
-    # ── Apply immediate removals (unused cert slots) ──────────
+    # ── 7. REMOVE LIST CONTINUATION PARAGRAPHS ─────────────────
+    if "continuation_paragraphs" in structure:
+        immediate_remove.extend(structure["continuation_paragraphs"])
+
+    # ── Apply immediate removals (unused/cleared/continuation slots) ──
     if immediate_remove:
         remove_body_children(body, immediate_remove)
 
