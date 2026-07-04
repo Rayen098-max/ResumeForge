@@ -669,6 +669,14 @@
       </div>
 
       <!-- GEMINI KEY INPUT -->
+      {% if has_server_key %}
+      <div style="margin-bottom: 30px; padding: 10px 12px; border: 1px dashed var(--accent); border-radius: 6px; background: rgba(0, 255, 102, 0.03); display: flex; align-items: center; gap: 8px;">
+        <span style="color: var(--accent); font-size: 14px; line-height: 1;">●</span>
+        <div style="font-family: var(--mono); font-size: 9px; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; font-weight: 700;">
+          Server Keys Active
+        </div>
+      </div>
+      {% else %}
       <div class="api-key-config">
         <label>Gemini API Keys</label>
         <div class="api-key-row">
@@ -679,6 +687,7 @@
           Paste comma-separated keys for auto-failover. Get keys from <a href="https://aistudio.google.com/" target="_blank" style="color: var(--accent); text-decoration: none;">Google AI Studio</a>.
         </div>
       </div>
+      {% endif %}
 
       <!-- STEPS (VERTICAL) -->
       <div class="steps-vertical">

@@ -110,8 +110,23 @@ def get_available_templates():
 
 @app.route("/")
 def index():
+    # Load .env file dynamically on initial page load as well
+    env_path = os.path.join(BASE_DIR, ".env")
+    if os.path.exists(env_path):
+        try:
+            with open(env_path, "r") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        os.environ[k.strip()] = v.strip()
+        except Exception:
+            pass
+
     templates = get_available_templates()
-    return render_template("index.html", templates=templates)
+    keys_raw = os.environ.get("GEMINI_API_KEY")
+    has_server_key = bool(keys_raw and keys_raw != "paste_your_keys_comma_separated_here")
+    return render_template("index.html", templates=templates, has_server_key=has_server_key)
 
 
 @app.route("/api/master-prompt")
@@ -264,10 +279,23 @@ def api_tailor():
     if not template_id or not job_description:
         return jsonify({"error": "Missing template_id or job_description"}), 400
 
+    # Load .env file dynamically to pick up real-time key modifications without restarts
+    env_path = os.path.join(BASE_DIR, ".env")
+    if os.path.exists(env_path):
+        try:
+            with open(env_path, "r") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        os.environ[k.strip()] = v.strip()
+        except Exception:
+            pass
+
     # Retrieve API keys (comma-separated support)
     keys_raw = request.headers.get("X-Gemini-Key") or os.environ.get("GEMINI_API_KEY")
-    if not keys_raw:
-        return jsonify({"error": "Missing Gemini API Key. Please enter it in the key input field or set GEMINI_API_KEY on the server."}), 401
+    if not keys_raw or keys_raw.strip() == "paste_your_keys_comma_separated_here":
+        return jsonify({"error": "Missing Gemini API Key. Please paste your valid keys inside the .env file in the project root."}), 401
 
     api_keys = [k.strip() for k in keys_raw.split(",") if k.strip()]
     if not api_keys:
