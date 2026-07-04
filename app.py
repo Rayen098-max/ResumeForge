@@ -28,6 +28,19 @@ TEMPLATES_DIR = os.path.join(BASE_DIR, "templates_docx")
 OUTPUTS_DIR = os.path.join(BASE_DIR, "outputs")
 os.makedirs(OUTPUTS_DIR, exist_ok=True)
 
+# Load .env file manually if exists
+env_path = os.path.join(BASE_DIR, ".env")
+if os.path.exists(env_path):
+    try:
+        with open(env_path, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    os.environ[k.strip()] = v.strip()
+    except Exception:
+        pass
+
 # In-memory session store (simple dict, single user)
 sessions = {}
 
@@ -232,6 +245,217 @@ def api_confirm():
         "session_id": session_id,
         "filename": sess["out_filename"],
     })
+
+
+@app.route("/api/tailor", methods=["POST"])
+def api_tailor():
+    """
+    Directly triggers the AI tailoring flow.
+    Receives template_id + job_description + optional custom_instructions.
+    Calls Gemini API, reframes content, generates temporary files, and returns data + warnings.
+    """
+    cleanup_outputs_dir()
+
+    data = request.json
+    template_id = data.get("template_id")
+    job_description = data.get("job_description")
+    custom_instructions = data.get("custom_instructions", "")
+
+    if not template_id or not job_description:
+        return jsonify({"error": "Missing template_id or job_description"}), 400
+
+    # Retrieve API key
+    api_key = request.headers.get("X-Gemini-Key") or os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return jsonify({"error": "Missing Gemini API Key. Please enter it in the key input field or set GEMINI_API_KEY on the server."}), 401
+
+    # Template path
+    template_path = os.path.join(TEMPLATES_DIR, template_id + ".docx")
+    if not os.path.exists(template_path):
+        return jsonify({"error": f"Template not found: {template_id}"}), 404
+
+    # Build AI Prompt
+    full_prompt = get_master_prompt() + "\n\nJob Description:\n" + job_description
+    if custom_instructions:
+        full_prompt += "\n\nAdditional Requirements / Focus Areas:\n" + custom_instructions
+
+    # Call Gemini REST API
+    import requests
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "contents": [{"parts": [{"text": full_prompt}]}],
+        "generationConfig": {"responseMimeType": "application/json"}
+    }
+
+    try:
+        res = requests.post(url, json=payload, headers=headers, timeout=60)
+        res_data = res.json()
+    except Exception as e:
+        return jsonify({"error": f"Gemini API network/timeout error: {str(e)}"}), 500
+
+    if "candidates" not in res_data or not res_data["candidates"]:
+        err_msg = res_data.get("error", {}).get("message", "Unknown Gemini API error")
+        return jsonify({"error": f"Gemini API Error: {err_msg}"}), 400
+
+    # Parse candidate text
+    try:
+        json_text = res_data["candidates"][0]["content"]["parts"][0]["text"].strip()
+        # Clean potential markdown block wrappers
+        if json_text.startswith("```"):
+            lines = json_text.splitlines()
+            if lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines[-1].startswith("```"):
+                lines = lines[:-1]
+            json_text = "\n".join(lines).strip()
+        
+        resume_data = json.loads(json_text)
+    except Exception as e:
+        return jsonify({"error": f"Failed to parse AI output as JSON: {str(e)}"}), 500
+
+    # Create session and custom files
+    session_id = str(uuid.uuid4())[:8]
+    role_name = resume_data.get("title_line", "tailored_role").split("|")[0].strip()
+    role_clean = sanitize_filename(role_name)
+    out_filename = f"Rayen_{role_clean}_{session_id}.docx"
+    out_path = os.path.join(OUTPUTS_DIR, out_filename)
+
+    # Run engine to apply text reframing
+    try:
+        apply_json_to_docx(template_path, out_path, resume_data)
+    except Exception as e:
+        return jsonify({"error": f"XML Engine rendering error: {str(e)}"}), 500
+
+    # Length fit check
+    try:
+        page_count = check_page_count(out_path)
+    except Exception:
+        page_count = 1
+
+    warnings = []
+    if page_count > 1:
+        try:
+            warnings = get_cut_plan(out_path, resume_data)
+        except Exception:
+            pass
+
+    sessions[session_id] = {
+        "out_path": out_path,
+        "out_filename": out_filename,
+        "warnings": warnings,
+        "resume_data": resume_data,
+        "template_id": template_id,
+        "role_name": role_name,
+    }
+
+    return jsonify({
+        "session_id": session_id,
+        "resume_data": resume_data,
+        "warnings": warnings,
+        "has_warnings": len(warnings) > 0,
+        "overflow": f"Resume is overflowing onto page {page_count}. Suggested minimum cuts shown below." if page_count > 1 else None
+    })
+
+
+@app.route("/api/compile", methods=["POST"])
+def api_compile():
+    """
+    Compiles user manual edits.
+    Receives session_id + updated resume_data JSON + confirmed_warnings index list.
+    Re-compiles from clean template, applies approved warning cuts, and returns status.
+    """
+    data = request.json
+    session_id = data.get("session_id")
+    resume_data = data.get("resume_data")
+    confirmed = data.get("confirmed_warnings", [])
+
+    if not session_id or not resume_data:
+        return jsonify({"error": "Missing session_id or resume_data"}), 400
+
+    sess = sessions.get(session_id)
+    if not sess:
+        return jsonify({"error": "Session not found"}), 404
+
+    # Update in-memory data
+    sess["resume_data"] = resume_data
+
+    # Always re-compile from clean template to prevent compounding edits on top of old files
+    template_path = os.path.join(TEMPLATES_DIR, sess["template_id"] + ".docx")
+    try:
+        apply_json_to_docx(template_path, sess["out_path"], resume_data)
+    except Exception as e:
+        return jsonify({"error": f"Compilation error: {str(e)}"}), 500
+
+    # Collect approved warning indices to delete
+    all_deletions = []
+    for wi in confirmed:
+        if wi < len(sess["warnings"]):
+            w = sess["warnings"][wi]
+            if "indices" in w:
+                all_deletions.extend(w["indices"])
+            elif "idx" in w:
+                all_deletions.append(w["idx"])
+
+    # Apply cuts
+    try:
+        if all_deletions:
+            apply_confirmed_deletions(sess["out_path"], all_deletions)
+    except Exception as e:
+        return jsonify({"error": f"Trimming error: {str(e)}"}), 500
+
+    # Check new page count
+    try:
+        page_count = check_page_count(sess["out_path"])
+    except Exception:
+        page_count = 1
+
+    # Regenerate cuts if still overflowing
+    warnings = []
+    if page_count > 1:
+        try:
+            warnings = get_cut_plan(sess["out_path"], resume_data)
+        except Exception:
+            pass
+    sess["warnings"] = warnings
+
+    # Update filename in case role title changed
+    role_name = resume_data.get("title_line", "tailored_role").split("|")[0].strip()
+    role_clean = sanitize_filename(role_name)
+    new_filename = f"Rayen_{role_clean}_{session_id}.docx"
+    new_path = os.path.join(OUTPUTS_DIR, new_filename)
+
+    if sess["out_path"] != new_path:
+        try:
+            # Clean up old DOCX
+            if os.path.exists(sess["out_path"]):
+                os.remove(sess["out_path"])
+            # Clean up old PDF
+            old_pdf = sess["out_path"].replace(".docx", ".pdf")
+            if os.path.exists(old_pdf):
+                os.remove(old_pdf)
+        except Exception:
+            pass
+        sess["out_path"] = new_path
+        sess["out_filename"] = new_filename
+        # Compile directly to the new path
+        try:
+            apply_json_to_docx(template_path, new_path, resume_data)
+            if all_deletions:
+                apply_confirmed_deletions(new_path, all_deletions)
+        except Exception:
+            pass
+
+    sess["role_name"] = role_name
+
+    return jsonify({
+        "success": True,
+        "session_id": session_id,
+        "warnings": warnings,
+        "has_warnings": len(warnings) > 0,
+        "overflow": f"Resume is overflowing onto page {page_count}. Trim items further or shorten sections." if page_count > 1 else None
+    })
+
 
 
 @app.route("/api/preview/<session_id>")

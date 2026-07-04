@@ -13,3 +13,4 @@ outputs/
 .idea/
 .vscode/
 templates_docx/custom_labels.json
+.env

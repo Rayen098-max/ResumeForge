@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ResumeForge — Dashboard</title>
+<title>ResumeForge — AI Tailoring Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -38,7 +38,7 @@
     flex-direction: column;
   }
 
-  /* CYBER SCIFI GRID BACKGROUND */
+  /* SCIFI GRID BACKGROUND */
   body::before {
     content: '';
     position: fixed;
@@ -73,7 +73,7 @@
   }
 
   .logo-area {
-    margin-bottom: 40px;
+    margin-bottom: 24px;
   }
   .logo {
     font-family: var(--mono);
@@ -98,18 +98,54 @@
     text-transform: uppercase;
   }
 
+  /* API KEY AREA */
+  .api-key-config {
+    margin-bottom: 30px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: rgba(17, 20, 32, 0.3);
+  }
+  .api-key-config label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .api-key-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .api-key-row input {
+    margin-top: 0;
+    padding: 8px 10px;
+    font-size: 11px;
+    flex: 1;
+    border-radius: 3px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .api-key-row button {
+    padding: 0 12px;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
   /* STEPPER INDICATOR (VERTICAL) */
   .steps-vertical {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
     margin-bottom: auto;
   }
   .step-v {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 12px;
+    gap: 14px;
+    padding: 10px 12px;
     background: rgba(17, 20, 32, 0.4);
     border: 1px solid rgba(0, 255, 102, 0.05);
     border-radius: 6px;
@@ -118,7 +154,7 @@
   }
   .step-v-num {
     font-family: var(--mono);
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 700;
     color: var(--muted);
     transition: all 0.25s ease;
@@ -128,7 +164,7 @@
     flex-direction: column;
   }
   .step-v-label {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--muted);
     letter-spacing: 1px;
@@ -136,9 +172,9 @@
     transition: all 0.25s ease;
   }
   .step-v-sub {
-    font-size: 10px;
+    font-size: 9px;
     color: var(--muted);
-    margin-top: 2px;
+    margin-top: 1px;
   }
 
   /* STEPPER ACTIVE / DONE STATES */
@@ -268,31 +304,6 @@
     font-size: 14px;
     line-height: 1.6;
     margin-bottom: 16px;
-  }
-
-  /* MASTER PROMPT BOX */
-  .prompt-box {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 18px;
-    font-family: var(--mono);
-    font-size: 11px;
-    color: #a0aec0;
-    max-height: 180px;
-    overflow: hidden;
-    position: relative;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    word-break: break-all;
-    margin-bottom: 16px;
-  }
-  .prompt-box::after {
-    content: '';
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 70px;
-    background: linear-gradient(transparent, var(--surface2));
   }
 
   /* BUTTONS */
@@ -651,46 +662,53 @@
 
   <!-- SIDEBAR -->
   <aside class="sidebar">
-    <div class="logo-area">
-      <div class="logo">● RESUME<span>FORGE</span></div>
-      <div class="sublogo">Surgical Document Tailoring</div>
-    </div>
+    <div>
+      <div class="logo-area">
+        <div class="logo">● RESUME<span>FORGE</span></div>
+        <div class="sublogo">Surgical Document Tailoring</div>
+      </div>
 
-    <!-- STEPS (VERTICAL) -->
-    <div class="steps-vertical">
-      <div class="step-v active" id="step-1">
-        <span class="step-v-num">01</span>
-        <div class="step-v-details">
-          <div class="step-v-label">Setup</div>
-          <div class="step-v-sub">Pick template</div>
+      <!-- GEMINI KEY INPUT -->
+      <div class="api-key-config">
+        <label>Gemini API Key</label>
+        <div class="api-key-row">
+          <input type="password" id="api-key-input" placeholder="Paste free API key...">
+          <button class="btn btn-secondary" onclick="saveApiKey()">Save</button>
+        </div>
+        <div style="font-size: 8.5px; color: var(--muted); margin-top: 5px; line-height: 1.3;">
+          Required for tailoring. Generate a free key at <a href="https://aistudio.google.com/" target="_blank" style="color: var(--accent); text-decoration: none;">Google AI Studio</a>.
         </div>
       </div>
-      <div class="step-v" id="step-2">
-        <span class="step-v-num">02</span>
-        <div class="step-v-details">
-          <div class="step-v-label">Paste</div>
-          <div class="step-v-sub">Paste LLM JSON</div>
+
+      <!-- STEPS (VERTICAL) -->
+      <div class="steps-vertical">
+        <div class="step-v active" id="step-1">
+          <span class="step-v-num">01</span>
+          <div class="step-v-details">
+            <div class="step-v-label">Setup</div>
+            <div class="step-v-sub">Pick template</div>
+          </div>
         </div>
-      </div>
-      <div class="step-v" id="step-3">
-        <span class="step-v-num">03</span>
-        <div class="step-v-details">
-          <div class="step-v-label">Review</div>
-          <div class="step-v-sub">Review removals</div>
+        <div class="step-v" id="step-2">
+          <span class="step-v-num">02</span>
+          <div class="step-v-details">
+            <div class="step-v-label">Tailor</div>
+            <div class="step-v-sub">AI generator</div>
+          </div>
         </div>
-      </div>
-      <div class="step-v" id="step-4">
-        <span class="step-v-num">04</span>
-        <div class="step-v-details">
-          <div class="step-v-label">Preview</div>
-          <div class="step-v-sub">Live document</div>
+        <div class="step-v" id="step-3">
+          <span class="step-v-num">03</span>
+          <div class="step-v-details">
+            <div class="step-v-label">Editor</div>
+            <div class="step-v-sub">Manual adjustments</div>
+          </div>
         </div>
-      </div>
-      <div class="step-v" id="step-5">
-        <span class="step-v-num">05</span>
-        <div class="step-v-details">
-          <div class="step-v-label">Download</div>
-          <div class="step-v-sub">Export PDF/DOCX</div>
+        <div class="step-v" id="step-4">
+          <span class="step-v-num">04</span>
+          <div class="step-v-details">
+            <div class="step-v-label">Export</div>
+            <div class="step-v-sub">Get PDF/DOCX</div>
+          </div>
         </div>
       </div>
     </div>
@@ -702,23 +720,13 @@
     <!-- LEFT PANEL: FORMS & WORKSPACE CONTROLS -->
     <div class="panel-left">
 
-      <!-- SECTION 1: SETUP (TEMPLATE & PROMPT) -->
+      <!-- SECTION 1: SETUP (TEMPLATE SELECTION) -->
       <div class="section active" id="sec-setup">
         <div class="card">
-          <div class="card-label">Step 1 of 5 — Prompt Generation</div>
-          <h2>Copy Master Prompt</h2>
-          <p>Paste this prompt into ChatGPT/Claude alongside the target job description to get properly structured JSON resume updates.</p>
-          <div class="prompt-box" id="prompt-preview">Loading prompt...</div>
-          <div class="gap-12">
-            <button class="btn btn-primary" onclick="copyPrompt()">⎘ Copy Prompt</button>
-          </div>
-        </div>
-
-        <div class="card" style="margin-top:24px;">
-          <div class="card-label">Step 2 of 5 — Base Template</div>
-          <h2>Select Target Role Template</h2>
-          <p>Select the standard `.docx` base sheet corresponding to your target profile category.</p>
-          <label style="margin-top:16px;">Resume Template Slot
+          <div class="card-label">Step 1 of 4 — Template Selection</div>
+          <h2>Select Target Role Base</h2>
+          <p>Choose the category base sheet you'd like to tailor.</p>
+          <label style="margin-top:16px;">Resume Template
             <select id="template-select">
               {% for t in templates %}
                 <option value="{{ t.id }}" {% if not t.available %}disabled{% endif %}>
@@ -727,8 +735,9 @@
               {% endfor %}
             </select>
           </label>
-          <div style="margin-top:20px;">
-            <button class="btn btn-primary" onclick="goToStep2()">Next: Paste JSON →</button>
+          
+          <div class="gap-12" style="margin-top:20px;">
+            <button class="btn btn-primary" onclick="goToStep2()">Next: Job Description →</button>
           </div>
         </div>
 
@@ -753,61 +762,107 @@
         </div>
       </div>
 
-      <!-- SECTION 2: PASTE JSON -->
-      <div class="section" id="sec-paste">
+      <!-- SECTION 2: JD & AI TAILORING -->
+      <div class="section" id="sec-tailor">
         <div class="card">
-          <div class="card-label">Step 3 of 5 — JSON Import</div>
-          <h2>Import Reframed JSON</h2>
-          <p>Paste the raw, valid JSON block generated by the LLM without any prefix comments or explanations.</p>
-          <label style="margin-top:16px;">Applied Role / Filename Label
-            <input type="text" id="role-name" placeholder="e.g. Senior Data Analyst — Google">
+          <div class="card-label">Step 2 of 4 — AI Tailoring</div>
+          <h2>Paste Target Job Description</h2>
+          <p>The AI will reframe your projects, certifications, and summary to match these requirements.</p>
+          <label style="margin-top:12px;">Job Description (Required)
+            <textarea id="job-desc-input" placeholder="Paste the job description text here..."></textarea>
           </label>
-          <label style="margin-top:16px;">Raw JSON Payload
-            <textarea id="json-input" placeholder='{
-  "title_line": "...",
-  "profile_summary": "...",
-  ...
-}'></textarea>
+          <label style="margin-top:16px;">Additional Focus / Personal Instructions (Optional)
+            <input type="text" id="custom-instructions" placeholder="e.g. Highlight cloud architecture, suppress web dev">
           </label>
           <div class="gap-12" style="margin-top:20px;">
             <button class="btn btn-secondary" onclick="goToSection('sec-setup', 1)">← Back</button>
-            <button class="btn btn-primary" id="process-btn" onclick="processResume()">⚡ Process Resume</button>
+            <button class="btn btn-primary" id="tailor-btn" onclick="tailorResume()">⚡ Tailor Resume</button>
           </div>
         </div>
       </div>
 
-      <!-- SECTION 3: WARNINGS & REMOVAL REVIEW -->
-      <div class="section" id="sec-warnings">
+      <!-- SECTION 3: INTERACTIVE EDITOR -->
+      <div class="section" id="sec-editor">
         <div class="card">
-          <div class="card-label">Step 4 of 5 — Page Fit Controls</div>
-          <h2>Review Cut Suggestions</h2>
-          <p>The document exceeds the single-page limit. Check the items you approve to trim. Unchecked items will be kept.</p>
-          <div class="warning-list" id="warning-list"></div>
-          <div class="gap-12" style="margin-top:24px;">
-            <button class="btn btn-secondary" onclick="goToSection('sec-paste', 2)">← Back</button>
-            <button class="btn btn-warn" onclick="confirmChanges()">✓ Apply & Preview</button>
+          <div class="card-label">Step 3 of 4 — Interactive Editor</div>
+          <h2>Edit Tailored Resume Fields</h2>
+          <p>Modify any field below. The live preview sheet on the right will update in real time.</p>
+          
+          <div class="editor-accordion" style="display:flex; flex-direction:column; gap:16px; margin-top:20px;">
+            <!-- Header Section -->
+            <div>
+              <label>Role Title & Subtitle</label>
+              <input type="text" id="edit-title-line" oninput="updatePreviewFromInputs()">
+            </div>
+            
+            <!-- Summary Section -->
+            <div style="margin-top:6px;">
+              <label>Profile Summary</label>
+              <textarea id="edit-profile-summary" style="min-height:90px;" oninput="updatePreviewFromInputs()"></textarea>
+            </div>
+            
+            <!-- Skills Section -->
+            <div style="margin-top:6px;">
+              <label style="color:var(--accent);">Core Competencies</label>
+              <div style="display:grid; grid-template-columns: 1fr 2fr; gap: 8px; margin-top: 8px;">
+                <input type="text" id="edit-comp-r1-lbl" placeholder="Row 1 Label" oninput="updatePreviewFromInputs()">
+                <input type="text" id="edit-comp-r1-skills" placeholder="Skill1, Skill2, Skill3" oninput="updatePreviewFromInputs()">
+                
+                <input type="text" id="edit-comp-r2-lbl" placeholder="Row 2 Label" oninput="updatePreviewFromInputs()">
+                <input type="text" id="edit-comp-r2-skills" placeholder="Skill1, Skill2" oninput="updatePreviewFromInputs()">
+                
+                <input type="text" id="edit-comp-r3-lbl" placeholder="Row 3 Label" oninput="updatePreviewFromInputs()">
+                <input type="text" id="edit-comp-r3-skills" placeholder="Skill1, Skill2" oninput="updatePreviewFromInputs()">
+              </div>
+            </div>
+
+            <!-- Certifications Section -->
+            <div style="border-top:1px solid rgba(0,255,102,0.1); padding-top:16px;">
+              <label style="color:var(--accent); margin-bottom:8px;">Certifications (AI Pool Picks)</label>
+              <div id="certs-editor-container" style="display:flex; flex-direction:column; gap:12px;">
+                <!-- Generated dynamically -->
+              </div>
+            </div>
+
+            <!-- Projects Section -->
+            <div style="border-top:1px solid rgba(0,255,102,0.1); padding-top:16px;">
+              <label style="color:var(--accent); margin-bottom:8px;">Projects</label>
+              <div id="projects-editor-container" style="display:flex; flex-direction:column; gap:16px;">
+                <!-- Generated dynamically -->
+              </div>
+            </div>
+
+            <!-- Extracurriculars Section -->
+            <div style="border-top:1px solid rgba(0,255,102,0.1); padding-top:16px;">
+              <label style="color:var(--accent); margin-bottom:8px;">Extracurriculars</label>
+              <div id="extras-editor-container" style="display:flex; flex-direction:column; gap:10px;">
+                <!-- Generated dynamically -->
+              </div>
+            </div>
+
           </div>
         </div>
-      </div>
 
-      <!-- SECTION 3 (ALT): NO WARNINGS -->
-      <div class="section" id="sec-nowarnings">
-        <div class="card">
-          <div class="card-label">Step 4 of 5 — Clear Fit</div>
-          <h2>✓ Ready to Render</h2>
-          <p>Excellent. The customized contents fit into a single page perfectly. No trimmings or removals required.</p>
-          <div class="gap-12" style="margin-top:20px;">
-            <button class="btn btn-primary" onclick="loadPreview()">Generate Preview →</button>
-          </div>
+        <!-- Overflows/Warnings Panel inside Section 3 -->
+        <div class="card" id="editor-warnings-card" style="margin-top:24px; display:none;">
+          <div class="card-label" style="color:var(--warn);">Fit Adjustment Required</div>
+          <h2>Document Overflows 1 Page</h2>
+          <p>Your resume exceeds the single-page limit. Check the items you approve to trim/remove, or manually shorten text in the editor fields above.</p>
+          <div class="warning-list" id="editor-warning-list"></div>
+        </div>
+
+        <div class="gap-12" style="margin-top:24px;">
+          <button class="btn btn-secondary" onclick="goToSection('sec-tailor', 2)">← Back</button>
+          <button class="btn btn-primary" id="compile-btn" onclick="compileResume()">✓ Apply & Compile</button>
         </div>
       </div>
 
       <!-- SECTION 4: ACTIONS / DOWNLOADS -->
       <div class="section" id="sec-preview">
         <div class="card">
-          <div class="card-label">Step 5 of 5 — Exports</div>
-          <h2>Export Finished Sheet</h2>
-          <p>Surgical edits complete. Select your preferred export format. Note that PDF rendering might take up to 10 seconds.</p>
+          <div class="card-label">Step 4 of 4 — Exports</div>
+          <h2>Export Finalized Sheets</h2>
+          <p>Surgical tailoring complete. Select your preferred output format. PDF rendering might take up to 10 seconds.</p>
           <div class="download-row">
             <button class="btn btn-primary" onclick="downloadFile('docx')">⬇ Download .docx</button>
             <button class="btn btn-blue" onclick="downloadFile('pdf')">⬇ Download PDF</button>
@@ -829,7 +884,7 @@
           <div class="preview-placeholder">
             <div class="placeholder-icon">📄</div>
             <h3>Interactive Workspace</h3>
-            <p>Select your template, get your JSON from the LLM, and the live preview will render your modified document outline here.</p>
+            <p>Select your template, input the Job Description, and the live preview will render your tailored document outline here.</p>
           </div>
         </div>
       </div>
@@ -840,7 +895,7 @@
 
 <!-- FOOTER -->
 <footer class="footer">
-  <div>ResumeForge Engine v1.1 © 2026</div>
+  <div>ResumeForge Engine v1.2 © 2026</div>
   <div class="footer-right">- Sparrow</div>
 </footer>
 
@@ -850,19 +905,21 @@
 <script>
   let currentSession = null;
   let currentTemplate = null;
-  let cachedPrompt = '';
+  let serverWarnings = [];
 
   // ─── INIT ───
-  fetch('/api/master-prompt').then(r => r.json()).then(d => {
-    cachedPrompt = d.prompt;
-    document.getElementById('prompt-preview').textContent = d.prompt.slice(0, 300) + '...';
+  document.addEventListener('DOMContentLoaded', () => {
+    const savedKey = localStorage.getItem('gemini_api_key');
+    if (savedKey) {
+      document.getElementById('api-key-input').value = savedKey;
+    }
   });
 
-  // ─── COPY PROMPT ───
-  function copyPrompt() {
-    navigator.clipboard.writeText(cachedPrompt).then(() => {
-      showToast('✓ Master Prompt copied to clipboard!');
-    });
+  // ─── SAVE API KEY ───
+  function saveApiKey() {
+    const key = document.getElementById('api-key-input').value.trim();
+    localStorage.setItem('gemini_api_key', key);
+    showToast('✓ API Key saved locally!');
   }
 
   // ─── STEP NAVIGATION ───
@@ -879,64 +936,213 @@
 
   function goToStep2() {
     currentTemplate = document.getElementById('template-select').value;
-    goToSection('sec-paste', 2);
+    goToSection('sec-tailor', 2);
   }
 
-  // ─── PROCESS RESUME ───
-  async function processResume() {
-    const jsonRaw = document.getElementById('json-input').value.trim();
-    const roleName = document.getElementById('role-name').value.trim() || currentTemplate.replace('_', ' ');
+  // ─── AI TAILORING ───
+  async function tailorResume() {
+    const jobDesc = document.getElementById('job-desc-input').value.trim();
+    const customInst = document.getElementById('custom-instructions').value.trim();
 
-    if (!jsonRaw) { showToast('⚠ Paste your JSON first!'); return; }
+    if (!jobDesc) { showToast('⚠ Paste the Job Description first!'); return; }
 
-    const btn = document.getElementById('process-btn');
+    const btn = document.getElementById('tailor-btn');
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Processing...';
+    btn.innerHTML = '<span class="spinner"></span> Tailoring...';
+
+    const savedKey = localStorage.getItem('gemini_api_key') || '';
 
     try {
-      const res = await fetch('/api/process', {
+      const res = await fetch('/api/tailor', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Gemini-Key': savedKey
+        },
         body: JSON.stringify({
           template_id: currentTemplate,
-          json_data: jsonRaw,
-          role_name: roleName,
+          job_description: jobDesc,
+          custom_instructions: customInst
         })
       });
       const data = await res.json();
 
-      if (data.error) { showToast('⚠ ' + data.error); return; }
+      if (data.error) {
+        showToast('⚠ ' + data.error);
+        return;
+      }
 
       currentSession = data.session_id;
+      serverWarnings = data.warnings || [];
 
+      // Populate interactive editor and update live preview
+      populateEditorForm(data.resume_data);
+      renderPreviewHTML(data.resume_data);
+
+      // Render warnings in editor if overflow
       if (data.has_warnings) {
-        renderWarnings(data.warnings, data.overflow);
-        goToSection('sec-warnings', 3);
+        renderEditorWarnings(data.warnings, data.overflow);
       } else {
-        goToSection('sec-nowarnings', 3);
+        document.getElementById('editor-warnings-card').style.display = 'none';
       }
-    } catch(e) {
+
+      // Go to Step 3: Editor
+      goToSection('sec-editor', 3);
+      showToast('✓ AI tailoring complete! Review edits.');
+
+    } catch (e) {
       showToast('⚠ Network error: ' + e.message);
     } finally {
       btn.disabled = false;
-      btn.innerHTML = '⚡ Process Resume';
+      btn.innerHTML = '⚡ Tailor Resume';
     }
   }
 
-  // ─── RENDER WARNINGS ───
-  function renderWarnings(warnings, overflowMsg) {
-    const list = document.getElementById('warning-list');
-    list.innerHTML = '';
-    if (overflowMsg) {
-      document.querySelector('#sec-warnings .card p').textContent = overflowMsg;
+  // ─── POPULATE EDITOR FIELDS ───
+  function populateEditorForm(d) {
+    document.getElementById('edit-title-line').value = d.title_line || '';
+    document.getElementById('edit-profile-summary').value = d.profile_summary || '';
+
+    const comp = d.core_competencies || {};
+    document.getElementById('edit-comp-r1-lbl').value = comp.row1_label || '';
+    document.getElementById('edit-comp-r1-skills').value = (comp.row1_skills || []).join(', ');
+    document.getElementById('edit-comp-r2-lbl').value = comp.row2_label || '';
+    document.getElementById('edit-comp-r2-skills').value = (comp.row2_skills || []).join(', ');
+    document.getElementById('edit-comp-r3-lbl').value = comp.row3_label || '';
+    document.getElementById('edit-comp-r3-skills').value = (comp.row3_skills || []).join(', ');
+
+    // Certifications
+    const certsContainer = document.getElementById('certs-editor-container');
+    certsContainer.innerHTML = '';
+    const certs = d.certifications || [];
+    for (let i = 0; i < 4; i++) {
+      const c = certs[i] || { name: '', provider: '', year: '', description: '' };
+      certsContainer.innerHTML += `
+        <div class="editor-subgroup" style="padding:12px; border:1px solid rgba(0,255,102,0.06); border-radius:4px; background:rgba(0,0,0,0.15)">
+          <div style="font-weight:600; font-size:11px; margin-bottom:6px; color:var(--muted)">Certification #${i+1}</div>
+          <div style="display:grid; grid-template-columns: 2fr 1fr; gap:8px;">
+            <input type="text" id="edit-cert-${i}-name" value="${escVal(c.name)}" placeholder="Cert Name" oninput="updatePreviewFromInputs()">
+            <input type="text" id="edit-cert-${i}-year" value="${escVal(c.year)}" placeholder="Year" oninput="updatePreviewFromInputs()">
+          </div>
+          <input type="text" id="edit-cert-${i}-provider" value="${escVal(c.provider)}" placeholder="Provider" oninput="updatePreviewFromInputs()" style="margin-top:6px;">
+          <input type="text" id="edit-cert-${i}-desc" value="${escVal(c.description)}" placeholder="Description sentence" oninput="updatePreviewFromInputs()" style="margin-top:6px;">
+        </div>
+      `;
     }
+
+    // Projects
+    const projsContainer = document.getElementById('projects-editor-container');
+    projsContainer.innerHTML = '';
+    const projs = d.projects || [];
+    for (let i = 0; i < 3; i++) {
+      const p = projs[i] || { name: '', year: '', bullets: ['', '', ''] };
+      const bullets = p.bullets || ['', '', ''];
+      projsContainer.innerHTML += `
+        <div class="editor-subgroup" style="padding:12px; border:1px solid rgba(0,255,102,0.06); border-radius:4px; background:rgba(0,0,0,0.15)">
+          <div style="font-weight:600; font-size:11px; margin-bottom:6px; color:var(--muted)">Project #${i+1}</div>
+          <div style="display:grid; grid-template-columns: 3fr 1fr; gap:8px;">
+            <input type="text" id="edit-proj-${i}-name" value="${escVal(p.name)}" placeholder="Project Name" oninput="updatePreviewFromInputs()">
+            <input type="text" id="edit-proj-${i}-year" value="${escVal(p.year)}" placeholder="Year" oninput="updatePreviewFromInputs()">
+          </div>
+          <div style="margin-top:8px; display:flex; flex-direction:column; gap:6px;">
+            <input type="text" id="edit-proj-${i}-b0" value="${escVal(bullets[0])}" placeholder="Bullet 1" oninput="updatePreviewFromInputs()">
+            <input type="text" id="edit-proj-${i}-b1" value="${escVal(bullets[1])}" placeholder="Bullet 2" oninput="updatePreviewFromInputs()">
+            <input type="text" id="edit-proj-${i}-b2" value="${escVal(bullets[2])}" placeholder="Bullet 3" oninput="updatePreviewFromInputs()">
+          </div>
+        </div>
+      `;
+    }
+
+    // Extracurriculars
+    const extrasContainer = document.getElementById('extras-editor-container');
+    extrasContainer.innerHTML = '';
+    const extras = d.extracurriculars || [];
+    for (let i = 0; i < 3; i++) {
+      const e = extras[i] || { full_line: '' };
+      extrasContainer.innerHTML += `
+        <input type="text" id="edit-extra-${i}" value="${escVal(e.full_line)}" placeholder="e.g. Rotaract Club Volunteer — sentence" oninput="updatePreviewFromInputs()">
+      `;
+    }
+  }
+
+  function escVal(s) {
+    if (!s) return '';
+    return String(s).replace(/"/g, '&quot;');
+  }
+
+  // ─── GATHER DATA FROM INPUTS ───
+  function gatherFormData() {
+    const comp = {
+      row1_label: document.getElementById('edit-comp-r1-lbl').value.trim(),
+      row1_skills: document.getElementById('edit-comp-r1-skills').value.split(',').map(s => s.trim()).filter(Boolean),
+      row2_label: document.getElementById('edit-comp-r2-lbl').value.trim(),
+      row2_skills: document.getElementById('edit-comp-r2-skills').value.split(',').map(s => s.trim()).filter(Boolean),
+      row3_label: document.getElementById('edit-comp-r3-lbl').value.trim(),
+      row3_skills: document.getElementById('edit-comp-r3-skills').value.split(',').map(s => s.trim()).filter(Boolean)
+    };
+
+    const certifications = [];
+    for (let i = 0; i < 4; i++) {
+      certifications.push({
+        name: document.getElementById(`edit-cert-${i}-name`).value.trim(),
+        provider: document.getElementById(`edit-cert-${i}-provider`).value.trim(),
+        year: document.getElementById(`edit-cert-${i}-year`).value.trim(),
+        description: document.getElementById(`edit-cert-${i}-desc`).value.trim()
+      });
+    }
+
+    const projects = [];
+    for (let i = 0; i < 3; i++) {
+      projects.push({
+        name: document.getElementById(`edit-proj-${i}-name`).value.trim(),
+        year: document.getElementById(`edit-proj-${i}-year`).value.trim(),
+        bullets: [
+          document.getElementById(`edit-proj-${i}-b0`).value.trim(),
+          document.getElementById(`edit-proj-${i}-b1`).value.trim(),
+          document.getElementById(`edit-proj-${i}-b2`).value.trim()
+        ].filter(Boolean)
+      });
+    }
+
+    const extracurriculars = [];
+    for (let i = 0; i < 3; i++) {
+      extracurriculars.push({
+        full_line: document.getElementById(`edit-extra-${i}`).value.trim()
+      });
+    }
+
+    return {
+      title_line: document.getElementById('edit-title-line').value.trim(),
+      profile_summary: document.getElementById('edit-profile-summary').value.trim(),
+      core_competencies: comp,
+      certifications: certifications,
+      projects: projects,
+      extracurriculars: extracurriculars
+    };
+  }
+
+  // ─── LIVE PREVIEW UPDATE ───
+  function updatePreviewFromInputs() {
+    const resume_data = gatherFormData();
+    renderPreviewHTML(resume_data);
+  }
+
+  // ─── RENDER WARNINGS IN EDITOR ───
+  function renderEditorWarnings(warnings, overflowMsg) {
+    const card = document.getElementById('editor-warnings-card');
+    card.style.display = 'block';
+    if (overflowMsg) {
+      card.querySelector('p').textContent = overflowMsg;
+    }
+    const list = document.getElementById('editor-warning-list');
+    list.innerHTML = '';
     warnings.forEach((w, i) => {
       const isRemove = w.type.includes('remove');
       const badge = isRemove ? 'REMOVE' : 'TRIM';
       const badgeClass = isRemove ? 'badge-remove' : 'badge-trim';
       list.innerHTML += `
         <div class="warning-item ${isRemove ? 'danger' : ''}">
-          <input type="checkbox" class="warning-check" id="warn-${i}" checked>
+          <input type="checkbox" class="warning-check editor-warning-check" id="warn-${i}" checked>
           <label for="warn-${i}" class="warning-text">
             <span class="warning-badge ${badgeClass}">${badge}</span>${w.msg}
           </label>
@@ -944,28 +1150,60 @@
     });
   }
 
-  // ─── CONFIRM CHANGES ───
-  async function confirmChanges() {
-    const checks = document.querySelectorAll('.warning-check');
+  // ─── COMPILE MANUAL EDITS & CUTS ───
+  async function compileResume() {
+    const resume_data = gatherFormData();
+    const checks = document.querySelectorAll('.editor-warning-check');
     const confirmed = [];
     checks.forEach((c, i) => { if (c.checked) confirmed.push(i); });
 
-    const res = await fetch('/api/confirm', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ session_id: currentSession, confirmed_warnings: confirmed })
-    });
-    const data = await res.json();
-    if (data.error) { showToast('⚠ ' + data.error); return; }
-    loadPreview();
+    const btn = document.getElementById('compile-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Compiling...';
+
+    try {
+      const res = await fetch('/api/compile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: currentSession,
+          resume_data: resume_data,
+          confirmed_warnings: confirmed
+        })
+      });
+      const data = await res.json();
+
+      if (data.error) {
+        showToast('⚠ ' + data.error);
+        return;
+      }
+
+      serverWarnings = data.warnings || [];
+
+      // Redraw preview using fresh response representation
+      renderPreviewHTML(resume_data);
+
+      if (data.has_warnings) {
+        // Redraw updated warning list if it still overflows
+        renderEditorWarnings(data.warnings, data.overflow);
+        showToast('⚠ Resume compiled but still overflows 1 page. Adjust edits.');
+      } else {
+        // Successful fit, proceed to Step 4
+        document.getElementById('editor-warnings-card').style.display = 'none';
+        goToSection('sec-preview', 4);
+        showToast('✓ Compilation successful! Clean 1-page document ready.');
+      }
+
+    } catch (e) {
+      showToast('⚠ Network error: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '✓ Apply & Compile';
+    }
   }
 
-  // ─── PREVIEW ───
-  async function loadPreview() {
-    goToSection('sec-preview', 4);
-    const res = await fetch(`/api/preview/${currentSession}`);
-    const d = await res.json();
-
+  // ─── PREVIEW DRAW ───
+  function renderPreviewHTML(d) {
     const comp = d.core_competencies || {};
     const certs = (d.certifications || []).filter(c => c.include !== false);
     const projs = (d.projects || []).filter(p => p.include !== false);
@@ -980,9 +1218,9 @@
       <div class="preview-summary">${esc(d.profile_summary || '')}</div>
 
       <div class="preview-section-head">Core Competencies</div>
-      <div class="preview-skills-row"><strong>${esc(comp.row1_label || '')}:</strong> ${esc((comp.row1_skills||[]).join(', '))}</div>
-      <div class="preview-skills-row"><strong>${esc(comp.row2_label || '')}:</strong> ${esc((comp.row2_skills||[]).join(', '))}</div>
-      <div class="preview-skills-row"><strong>${esc(comp.row3_label || '')}:</strong> ${esc((comp.row3_skills||[]).join(', '))}</div>
+      <div class="preview-skills-row"><strong>${esc(comp.row1_label || '')}:</strong> ${esc(Array.isArray(comp.row1_skills) ? comp.row1_skills.join(', ') : comp.row1_skills || '')}</div>
+      <div class="preview-skills-row"><strong>${esc(comp.row2_label || '')}:</strong> ${esc(Array.isArray(comp.row2_skills) ? comp.row2_skills.join(', ') : comp.row2_skills || '')}</div>
+      <div class="preview-skills-row"><strong>${esc(comp.row3_label || '')}:</strong> ${esc(Array.isArray(comp.row3_skills) ? comp.row3_skills.join(', ') : comp.row3_skills || '')}</div>
 
       <div class="preview-section-head">Education</div>
       <div class="preview-skills-row"><strong>B.Tech — Computer Engineering</strong> | Fr. CRCE, Mumbai | 2023–2027</div>
@@ -992,6 +1230,7 @@
     if (certs.length) {
       html += `<div class="preview-section-head">Certifications</div>`;
       certs.forEach(c => {
+        if (!c.name) return;
         html += `<div class="preview-cert-name">${esc(c.name)} <span style="font-weight:400;color:#5e6f8a;font-size:10px;">${esc(c.year||'')}</span></div>`;
         html += `<div class="preview-cert-provider">${esc(c.provider||'')}</div>`;
         if (c.description) html += `<div class="preview-bullet">${esc(c.description)}</div>`;
@@ -1001,9 +1240,10 @@
     if (projs.length) {
       html += `<div class="preview-section-head">Projects</div>`;
       projs.forEach(p => {
+        if (!p.name) return;
         html += `<div class="preview-proj-name">${esc(p.name)} <span style="font-weight:400;color:#5e6f8a;font-size:10px;">${esc(p.year||'')}</span></div>`;
         (p.bullets||[]).forEach(b => {
-          html += `<div class="preview-bullet">${esc(b)}</div>`;
+          if (b) html += `<div class="preview-bullet">${esc(b)}</div>`;
         });
       });
     }
@@ -1012,7 +1252,7 @@
     html += `<div class="preview-section-head">Extracurricular Activities & Experience</div>`;
     if (extras.length) {
       extras.forEach(e => {
-        html += `<div class="preview-skills-row">${esc(e.full_line || '')}</div>`;
+        if (e.full_line) html += `<div class="preview-skills-row">${esc(e.full_line || '')}</div>`;
       });
     } else {
       html += `<div class="preview-skills-row" style="color:#5e6f8a;font-style:italic;">(Unchanged from template)</div>`;
@@ -1029,15 +1269,6 @@
     el.classList.remove('update');
     void el.offsetWidth; // trigger reflow
     el.classList.add('update');
-
-    // Move to download step indicator (Step 5)
-    setTimeout(() => {
-      document.querySelectorAll('.step-v').forEach((s, i) => {
-        s.classList.remove('active', 'done');
-        if (i < 4) s.classList.add('done');
-        if (i === 4) s.classList.add('active');
-      });
-    }, 100);
   }
 
   function esc(s) {
@@ -1059,15 +1290,15 @@
       await fetch(`/api/reset/${currentSession}`, { method: 'POST' });
       currentSession = null;
     }
-    document.getElementById('json-input').value = '';
-    document.getElementById('role-name').value = '';
+    document.getElementById('job-desc-input').value = '';
+    document.getElementById('custom-instructions').value = '';
     
     // Reset preview panel placeholder
     document.getElementById('preview-content').innerHTML = `
       <div class="preview-placeholder">
         <div class="placeholder-icon">📄</div>
         <h3>Interactive Workspace</h3>
-        <p>Select your template, get your JSON from the LLM, and the live preview will render your modified document outline here.</p>
+        <p>Select your template, input the Job Description, and the live preview will render your tailored document outline here.</p>
       </div>
     `;
 
