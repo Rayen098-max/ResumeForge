@@ -20,6 +20,18 @@ from master_prompt import get_master_prompt
 
 app = Flask(__name__, template_folder="templates_html")
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+    from werkzeug.exceptions import HTTPException
+    if isinstance(e, HTTPException):
+        return jsonify({"error": e.description}), e.code
+    import traceback
+    tb = traceback.format_exc()
+    print("=== UNHANDLED SERVER EXCEPTION ===")
+    print(tb)
+    print("==================================")
+    return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
+
 # ─────────────────────────────────────────────
 # PATHS
 # ─────────────────────────────────────────────
