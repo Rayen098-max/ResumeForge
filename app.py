@@ -292,8 +292,8 @@ def api_tailor():
         except Exception:
             pass
 
-    # Retrieve API keys (comma-separated support)
-    keys_raw = request.headers.get("X-Gemini-Key") or os.environ.get("GEMINI_API_KEY")
+    # Retrieve API keys (prioritizing server-side env keys over client-side header keys)
+    keys_raw = os.environ.get("GEMINI_API_KEY") or request.headers.get("X-Gemini-Key")
     if not keys_raw or keys_raw.strip() == "paste_your_keys_comma_separated_here":
         return jsonify({"error": "Missing Gemini API Key. Please paste your valid keys inside the .env file in the project root."}), 401
 
@@ -318,7 +318,7 @@ def api_tailor():
     last_error_msg = "Unknown error"
 
     for idx, api_key in enumerate(api_keys):
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
         headers = {"Content-Type": "application/json"}
         payload = {
             "contents": [{"parts": [{"text": full_prompt}]}],
