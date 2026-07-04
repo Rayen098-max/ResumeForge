@@ -559,12 +559,13 @@ def api_download(session_id, format):
     role_name = sanitize_filename(sess["role_name"])
 
     if format == "docx":
-        return send_file(
+        response = send_file(
             docx_path,
             as_attachment=True,
-            download_name=f"Rayen_{role_name}.docx",
             mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
+        response.headers["Content-Disposition"] = f'attachment; filename="Rayen_{role_name}.docx"'
+        return response
     elif format == "pdf":
         pdf_path = docx_path.replace(".docx", ".pdf")
 
@@ -573,12 +574,13 @@ def api_download(session_id, format):
                 "error": "PDF conversion failed. As a workaround: open the downloaded DOCX in Word → File → Save As → PDF."
             }), 500
 
-        return send_file(
+        response = send_file(
             pdf_path,
             as_attachment=True,
-            download_name=f"Rayen_{role_name}.pdf",
             mimetype="application/pdf"
         )
+        response.headers["Content-Disposition"] = f'attachment; filename="Rayen_{role_name}.pdf"'
+        return response
     else:
         return jsonify({"error": "Invalid format"}), 400
 

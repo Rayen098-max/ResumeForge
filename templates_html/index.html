@@ -1293,7 +1293,17 @@
 
   // ─── DOWNLOAD ───
   function downloadFile(format) {
-    window.location.href = `/api/download/${currentSession}/${format}`;
+    const link = document.createElement('a');
+    link.href = `/api/download/${currentSession}/${format}`;
+    
+    // Fallback client-side download filename hint
+    const roleName = document.getElementById('edit-title-line')?.value?.split('|')?.[0]?.trim()?.replace(/\s+/g, '_') || 'Resume';
+    link.download = `Rayen_${roleName}.${format}`;
+    
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     showToast(`✓ Requesting export format: ${format.toUpperCase()}...`);
   }
 
