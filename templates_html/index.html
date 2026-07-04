@@ -1150,12 +1150,22 @@
     const list = document.getElementById('editor-warning-list');
     list.innerHTML = '';
     warnings.forEach((w, i) => {
+      if (w.type === 'summary_trim') {
+        list.innerHTML += `
+          <div class="warning-item info" style="border-left: 2px solid var(--accent); padding-left: 10px; background: rgba(0,255,102,0.02); border-radius: 4px;">
+            <div class="warning-text" style="color: var(--accent); font-size: 11px;">
+              <span class="warning-badge" style="background: rgba(0,255,102,0.1); color: var(--accent);">INFO</span>
+              ${w.msg} (Please edit the text box above manually to make it shorter)
+            </div>
+          </div>`;
+        return;
+      }
       const isRemove = w.type.includes('remove');
       const badge = isRemove ? 'REMOVE' : 'TRIM';
       const badgeClass = isRemove ? 'badge-remove' : 'badge-trim';
       list.innerHTML += `
         <div class="warning-item ${isRemove ? 'danger' : ''}">
-          <input type="checkbox" class="warning-check editor-warning-check" id="warn-${i}" checked>
+          <input type="checkbox" class="warning-check editor-warning-check" id="warn-${i}" checked data-index="${i}">
           <label for="warn-${i}" class="warning-text">
             <span class="warning-badge ${badgeClass}">${badge}</span>${w.msg}
           </label>
@@ -1168,7 +1178,7 @@
     const resume_data = gatherFormData();
     const checks = document.querySelectorAll('.editor-warning-check');
     const confirmed = [];
-    checks.forEach((c, i) => { if (c.checked) confirmed.push(i); });
+    checks.forEach((c) => { if (c.checked) confirmed.push(parseInt(c.getAttribute('data-index'))); });
 
     const btn = document.getElementById('compile-btn');
     btn.disabled = true;

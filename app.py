@@ -464,29 +464,29 @@ def api_compile():
     # Update in-memory data
     sess["resume_data"] = resume_data
 
+    # Apply confirmed trims to the JSON data directly before compilation
+    for wi in confirmed:
+        if wi < len(sess["warnings"]):
+            w = sess["warnings"][wi]
+            w_type = w.get("type")
+            w_name = w.get("name")
+            if w_type == "bullet_trim":
+                for proj in resume_data.get("projects", []):
+                    if proj.get("name") == w_name:
+                        bullets = proj.get("bullets", [])
+                        if bullets:
+                            bullets.pop()
+            elif w_type == "project_remove":
+                for proj in resume_data.get("projects", []):
+                    if proj.get("name") == w_name:
+                        proj["include"] = False
+
     # Always re-compile from clean template to prevent compounding edits on top of old files
     template_path = os.path.join(TEMPLATES_DIR, sess["template_id"] + ".docx")
     try:
         apply_json_to_docx(template_path, sess["out_path"], resume_data)
     except Exception as e:
         return jsonify({"error": f"Compilation error: {str(e)}"}), 500
-
-    # Collect approved warning indices to delete
-    all_deletions = []
-    for wi in confirmed:
-        if wi < len(sess["warnings"]):
-            w = sess["warnings"][wi]
-            if "indices" in w:
-                all_deletions.extend(w["indices"])
-            elif "idx" in w:
-                all_deletions.append(w["idx"])
-
-    # Apply cuts
-    try:
-        if all_deletions:
-            apply_confirmed_deletions(sess["out_path"], all_deletions)
-    except Exception as e:
-        return jsonify({"error": f"Trimming error: {str(e)}"}), 500
 
     # Check new page count
     try:
@@ -525,8 +525,6 @@ def api_compile():
         # Compile directly to the new path
         try:
             apply_json_to_docx(template_path, new_path, resume_data)
-            if all_deletions:
-                apply_confirmed_deletions(new_path, all_deletions)
         except Exception:
             pass
 
