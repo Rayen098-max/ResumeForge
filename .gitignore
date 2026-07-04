@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+ENV/
+outputs/
+*.tmp
+*_pagecheck.pdf
+.idea/
+.vscode/
+templates_docx/custom_labels.json

@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ResumeForge</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --accent: #c8f060;
+    --accent2: #60c8f0;
+    --danger: #f06060;
+    --warn: #f0c060;
+    --text: #e8e8e8;
+    --muted: #666;
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* GRID LINES BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(200,240,96,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,240,96,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* HEADER */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 32px;
+    margin-bottom: 48px;
+  }
+  .logo {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .header h1 {
+    font-family: var(--mono);
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: -2px;
+    line-height: 1;
+    color: var(--text);
+  }
+  .header h1 span { color: var(--accent); }
+  .tagline {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 300;
+  }
+
+  /* STEP INDICATOR */
+  .steps {
+    display: flex;
+    gap: 0;
+    margin-bottom: 40px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .step {
+    flex: 1;
+    padding: 12px 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    border-right: 1px solid var(--border);
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+  .step:last-child { border-right: none; }
+  .step.active { background: var(--accent); color: #0d0d0d; font-weight: 700; }
+  .step.done { color: var(--accent); }
+  .step-num { display: block; font-size: 18px; font-weight: 700; margin-bottom: 2px; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 28px;
+    margin-bottom: 24px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: #3a3a3a; }
+  .card-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .card p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+  /* MASTER PROMPT BOX */
+  .prompt-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #888;
+    max-height: 140px;
+    overflow: hidden;
+    position: relative;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .prompt-box::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    background: linear-gradient(transparent, var(--surface2));
+  }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+  .btn-primary { background: var(--accent); color: #0d0d0d; }
+  .btn-primary:hover { background: #d4f570; transform: translateY(-1px); }
+  .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-warn { background: var(--warn); color: #0d0d0d; }
+  .btn-blue { background: var(--accent2); color: #0d0d0d; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+
+  /* FORM ELEMENTS */
+  select, textarea, input[type="text"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-top: 8px;
+  }
+  select:focus, textarea:focus, input[type="text"]:focus {
+    border-color: var(--accent);
+  }
+  textarea {
+    font-family: var(--mono);
+    font-size: 12px;
+    resize: vertical;
+    min-height: 180px;
+    line-height: 1.5;
+  }
+  label { font-size: 13px; color: #aaa; font-weight: 500; display: block; }
+
+  /* WARNING PANEL */
+  .warning-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .warning-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--surface2);
+    border: 1px solid #3a2a00;
+    border-radius: 3px;
+    padding: 14px;
+  }
+  .warning-item.danger { border-color: #3a0000; }
+  .warning-check { accent-color: var(--warn); width: 16px; height: 16px; margin-top: 2px; flex-shrink: 0; cursor: pointer; }
+  .warning-text { font-size: 13px; color: #ccc; line-height: 1.5; }
+  .warning-badge {
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 2px;
+    margin-right: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .badge-remove { background: var(--danger); color: #fff; }
+  .badge-trim { background: var(--warn); color: #0d0d0d; }
+
+  /* PREVIEW PANEL */
+  .preview-panel {
+    background: #fff;
+    color: #111;
+    border-radius: 4px;
+    padding: 32px 36px;
+    font-family: 'Calibri', 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1.5;
+    border: 1px solid var(--border);
+  }
+  .preview-name { font-size: 22px; font-weight: 700; text-align: center; letter-spacing: 2px; text-transform: uppercase; color: #1a1a1a; }
+  .preview-title { text-align: center; color: #444; margin: 4px 0 2px; font-size: 13px; }
+  .preview-contact { text-align: center; color: #555; font-size: 11px; }
+  .preview-divider { border: none; border-top: 1.5px solid #222; margin: 10px 0 8px; }
+  .preview-section-head {
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; border-bottom: 1px solid #bbb;
+    padding-bottom: 2px; margin: 12px 0 6px; color: #1a1a1a;
+  }
+  .preview-summary { font-size: 11.5px; color: #222; margin-bottom: 4px; }
+  .preview-skills-row { font-size: 11px; margin: 3px 0; color: #222; }
+  .preview-skills-row strong { font-weight: 700; }
+  .preview-cert-name { font-weight: 700; font-size: 11.5px; color: #111; margin-top: 6px; }
+  .preview-cert-provider { font-size: 10.5px; color: #555; }
+  .preview-bullet { font-size: 11px; padding-left: 14px; position: relative; margin: 2px 0; color: #222; }
+  .preview-bullet::before { content: '•'; position: absolute; left: 4px; }
+  .preview-proj-name { font-weight: 700; font-size: 11.5px; margin-top: 8px; color: #111; }
+  .preview-removed { text-decoration: line-through; opacity: 0.4; }
+
+  /* DOWNLOAD ROW */
+  .download-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+
+  /* SECTION HIDE/SHOW */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    padding: 14px 20px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 12px;
+    z-index: 999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* SPINNER */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid transparent;
+    border-top-color: #0d0d0d;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* UPLOAD SLOT */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 4px;
+    padding: 24px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    margin-top: 8px;
+  }
+  .upload-zone:hover { border-color: var(--accent2); color: var(--accent2); }
+  .upload-zone input { display: none; }
+
+  .gap-12 { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+
+  @media (max-width: 600px) {
+    .header h1 { font-size: 28px; }
+    .steps { flex-wrap: wrap; }
+    .step { min-width: 50%; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">● ResumeForge v1.0</div>
+    <h1>Resume<span>Forge</span></h1>
+    <p class="tagline">Surgical resume tailoring. Zero reformatting. One page. Always.</p>
+  </header>
+
+  <!-- STEP INDICATOR -->
+  <div class="steps">
+    <div class="step active" id="step-1"><span class="step-num">01</span>SETUP</div>
+    <div class="step" id="step-2"><span class="step-num">02</span>PASTE</div>
+    <div class="step" id="step-3"><span class="step-num">03</span>REVIEW</div>
+    <div class="step" id="step-4"><span class="step-num">04</span>PREVIEW</div>
+    <div class="step" id="step-5"><span class="step-num">05</span>DOWNLOAD</div>
+  </div>
+
+  <!-- ═══════════════════════════════════ -->
+  <!-- SECTION 1: TEMPLATE + MASTER PROMPT -->
+  <!-- ═══════════════════════════════════ -->
+  <div class="section active" id="sec-setup">
+
+    <!-- Master Prompt -->
+    <div class="card">
+      <div class="card-label">Step 1 of 5 — Copy Master Prompt</div>
+      <h2>Get your tailored JSON from any AI</h2>
+      <p style="margin-bottom:16px;">Copy this prompt → paste it into ChatGPT or Claude along with your job description → get structured JSON back → come back here.</p>
+      <div class="prompt-box" id="prompt-preview">Loading prompt...</div>
+      <div class="gap-12">
+        <button class="btn btn-primary" onclick="copyPrompt()">⎘ Copy Master Prompt</button>
+      </div>
+    </div>
+
+    <!-- Template Selector -->
+    <div class="card">
+      <div class="card-label">Step 2 of 5 — Pick Template</div>
+      <h2>Select your resume template</h2>
+      <p>Choose the template that matches the role you're applying for.</p>
+      <label style="margin-top:16px;">Template
+        <select id="template-select">
+          {% for t in templates %}
+            <option value="{{ t.id }}" {% if not t.available %}disabled{% endif %}>
+              {{ t.label }}{% if not t.available %} — No file uploaded yet{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+      <div style="margin-top:16px;">
+        <button class="btn btn-primary" onclick="goToStep2()">Next: Paste JSON →</button>
+      </div>
+    </div>
+
+    <!-- Upload Empty Slot -->
+    <div class="card">
+      <div class="card-label">Upload a New Template (Slots 4–6)</div>
+      <h2>Add a custom template</h2>
+      <p>Upload a .docx resume file into an empty slot.</p>
+      <label style="margin-top:16px;">Slot
+        <select id="upload-slot">
+          <option value="Slot_4">Slot 4</option>
+          <option value="Slot_5">Slot 5</option>
+          <option value="Slot_6">Slot 6</option>
+        </select>
+      </label>
+      <label style="margin-top:12px;">Label (what to call it)
+        <input type="text" id="upload-label" placeholder="e.g. Product Manager">
+      </label>
+      <div class="upload-zone" onclick="document.getElementById('upload-file').click()">
+        <input type="file" id="upload-file" accept=".docx" onchange="uploadTemplate()">
+        <div id="upload-status">Click to select .docx file</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════ -->
+  <!-- SECTION 2: PASTE JSON -->
+  <!-- ═══════════════════════════════════ -->
+  <div class="section" id="sec-paste">
+    <div class="card">
+      <div class="card-label">Step 3 of 5 — Paste AI Output</div>
+      <h2>Paste the JSON from ChatGPT / Claude</h2>
+      <p>The AI should have returned a pure JSON object. Paste the entire thing below.</p>
+      <label style="margin-top:16px;">Role name (for file naming)
+        <input type="text" id="role-name" placeholder="e.g. Data Analyst — Google">
+      </label>
+      <label style="margin-top:12px;">JSON Output from AI
+        <textarea id="json-input" placeholder='Paste your JSON here...
+{
+  "title_line": "...",
+  "profile_summary": "...",
+  ...
+}'></textarea>
+      </label>
+      <div class="gap-12" style="margin-top:20px;">
+        <button class="btn btn-secondary" onclick="goToSection('sec-setup', 1)">← Back</button>
+        <button class="btn btn-primary" id="process-btn" onclick="processResume()">⚡ Process Resume</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ -->
+  <!-- SECTION 3: WARNINGS / CONFIRM -->
+  <!-- ═══════════════════════════════════ -->
+  <div class="section" id="sec-warnings">
+    <div class="card">
+      <div class="card-label">Step 4 of 5 — Review Changes</div>
+      <h2>Confirm what gets changed</h2>
+      <p>The engine detected the following removals needed. Check the ones you approve. Unchecked items will be kept as-is.</p>
+      <div class="warning-list" id="warning-list"></div>
+      <div class="gap-12" style="margin-top:24px;">
+        <button class="btn btn-secondary" onclick="goToSection('sec-paste', 2)">← Back</button>
+        <button class="btn btn-warn" onclick="confirmChanges()">✓ Confirm & Preview</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NO WARNINGS — skip to preview -->
+  <div class="section" id="sec-nowarnings">
+    <div class="card">
+      <div class="card-label">Step 4 of 5 — No Removals Needed</div>
+      <h2>✓ Clean edit — no items removed</h2>
+      <p>No certifications or project bullets needed to be removed for this role. Proceeding directly to preview.</p>
+      <div class="gap-12" style="margin-top:20px;">
+        <button class="btn btn-primary" onclick="loadPreview()">View Preview →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ -->
+  <!-- SECTION 4: PREVIEW -->
+  <!-- ═══════════════════════════════════ -->
+  <div class="section" id="sec-preview">
+    <div class="card">
+      <div class="card-label">Step 5 of 5 — Preview</div>
+      <h2>Your tailored resume</h2>
+      <p style="margin-bottom:20px;">This is a visual summary of what was written into your document. Download to get the full formatted file.</p>
+      <div class="preview-panel" id="preview-content">Loading...</div>
+      <div class="download-row">
+        <button class="btn btn-primary" onclick="downloadFile('docx')">⬇ Download .docx</button>
+        <button class="btn btn-blue" onclick="downloadFile('pdf')">⬇ Download PDF</button>
+        <button class="btn btn-secondary" onclick="resetAll()">↺ Start Over</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  let currentSession = null;
+  let currentTemplate = null;
+  let cachedPrompt = '';
+
+  // ─── INIT ───
+  fetch('/api/master-prompt').then(r => r.json()).then(d => {
+    cachedPrompt = d.prompt;
+    document.getElementById('prompt-preview').textContent = d.prompt.slice(0, 300) + '...';
+  });
+
+  // ─── COPY PROMPT ───
+  function copyPrompt() {
+    navigator.clipboard.writeText(cachedPrompt).then(() => {
+      showToast('✓ Master Prompt copied to clipboard!');
+    });
+  }
+
+  // ─── STEP NAVIGATION ───
+  function goToSection(sectionId, stepNum) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(sectionId).classList.add('active');
+    document.querySelectorAll('.step').forEach((s, i) => {
+      s.classList.remove('active', 'done');
+      if (i + 1 < stepNum) s.classList.add('done');
+      if (i + 1 === stepNum) s.classList.add('active');
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function goToStep2() {
+    currentTemplate = document.getElementById('template-select').value;
+    goToSection('sec-paste', 2);
+  }
+
+  // ─── PROCESS RESUME ───
+  async function processResume() {
+    const jsonRaw = document.getElementById('json-input').value.trim();
+    const roleName = document.getElementById('role-name').value.trim() || currentTemplate.replace('_', ' ');
+
+    if (!jsonRaw) { showToast('⚠ Paste your JSON first!'); return; }
+
+    const btn = document.getElementById('process-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Processing...';
+
+    try {
+      const res = await fetch('/api/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          template_id: currentTemplate,
+          json_data: jsonRaw,
+          role_name: roleName,
+        })
+      });
+      const data = await res.json();
+
+      if (data.error) { showToast('⚠ ' + data.error); return; }
+
+      currentSession = data.session_id;
+
+      if (data.has_warnings) {
+        renderWarnings(data.warnings, data.overflow);
+        goToSection('sec-warnings', 3);
+      } else {
+        goToSection('sec-nowarnings', 3);
+      }
+    } catch(e) {
+      showToast('⚠ Network error: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '⚡ Process Resume';
+    }
+  }
+
+  // ─── RENDER WARNINGS ───
+  function renderWarnings(warnings, overflowMsg) {
+    const list = document.getElementById('warning-list');
+    list.innerHTML = '';
+    if (overflowMsg) {
+      document.querySelector('#sec-warnings .card p').textContent = overflowMsg;
+    }
+    warnings.forEach((w, i) => {
+      const isRemove = w.type.includes('remove');
+      const badge = isRemove ? 'REMOVE' : 'TRIM';
+      const badgeClass = isRemove ? 'badge-remove' : 'badge-trim';
+      list.innerHTML += `
+        <div class="warning-item ${isRemove ? 'danger' : ''}">
+          <input type="checkbox" class="warning-check" id="warn-${i}" checked>
+          <label for="warn-${i}" class="warning-text">
+            <span class="warning-badge ${badgeClass}">${badge}</span>${w.msg}
+          </label>
+        </div>`;
+    });
+  }
+
+  // ─── CONFIRM CHANGES ───
+  async function confirmChanges() {
+    const checks = document.querySelectorAll('.warning-check');
+    const confirmed = [];
+    checks.forEach((c, i) => { if (c.checked) confirmed.push(i); });
+
+    const res = await fetch('/api/confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: currentSession, confirmed_warnings: confirmed })
+    });
+    const data = await res.json();
+    if (data.error) { showToast('⚠ ' + data.error); return; }
+    loadPreview();
+  }
+
+  // ─── PREVIEW ───
+  async function loadPreview() {
+    goToSection('sec-preview', 4);
+    const res = await fetch(`/api/preview/${currentSession}`);
+    const d = await res.json();
+
+    const comp = d.core_competencies || {};
+    const certs = (d.certifications || []).filter(c => c.include !== false);
+    const projs = (d.projects || []).filter(p => p.include !== false);
+
+    let html = `
+      <div class="preview-name">RAYEN PEREIRA</div>
+      <div class="preview-title">${esc(d.title_line || '')}</div>
+      <div class="preview-contact">+91 8767467832 │ rayanp452@gmail.com │ LinkedIn │ Virar(w), Mumbai</div>
+      <hr class="preview-divider">
+
+      <div class="preview-section-head">Profile Summary</div>
+      <div class="preview-summary">${esc(d.profile_summary || '')}</div>
+
+      <div class="preview-section-head">Core Competencies</div>
+      <div class="preview-skills-row"><strong>${esc(comp.row1_label || '')}:</strong> ${esc((comp.row1_skills||[]).join(', '))}</div>
+      <div class="preview-skills-row"><strong>${esc(comp.row2_label || '')}:</strong> ${esc((comp.row2_skills||[]).join(', '))}</div>
+      <div class="preview-skills-row"><strong>${esc(comp.row3_label || '')}:</strong> ${esc((comp.row3_skills||[]).join(', '))}</div>
+
+      <div class="preview-section-head">Education</div>
+      <div class="preview-skills-row"><strong>B.Tech — Computer Engineering</strong> | Fr. CRCE, Mumbai | 2023–2027</div>
+      <div class="preview-skills-row"><strong>HSC — Science</strong> | Annasaheb Vartak College | 2021–2023</div>
+    `;
+
+    if (certs.length) {
+      html += `<div class="preview-section-head">Certifications</div>`;
+      certs.forEach(c => {
+        html += `<div class="preview-cert-name">${esc(c.name)} <span style="font-weight:400;color:#555;font-size:10px;">${esc(c.year||'')}</span></div>`;
+        html += `<div class="preview-cert-provider">${esc(c.provider||'')}</div>`;
+        if (c.description) html += `<div class="preview-bullet">${esc(c.description)}</div>`;
+      });
+    }
+
+    if (projs.length) {
+      html += `<div class="preview-section-head">Projects</div>`;
+      projs.forEach(p => {
+        html += `<div class="preview-proj-name">${esc(p.name)} <span style="font-weight:400;color:#555;font-size:10px;">${esc(p.year||'')}</span></div>`;
+        (p.bullets||[]).forEach(b => {
+          html += `<div class="preview-bullet">${esc(b)}</div>`;
+        });
+      });
+    }
+
+    const extras = d.extracurriculars || [];
+      html += `<div class="preview-section-head">Extracurricular Activities & Experience</div>`;
+      if (extras.length) {
+        extras.forEach(e => {
+          html += `<div class="preview-skills-row">${esc(e.full_line || '')}</div>`;
+        });
+      } else {
+        html += `<div class="preview-skills-row" style="color:#555;font-style:italic;">(Unchanged from template)</div>`;
+      }
+      html += `
+      <div class="preview-section-head">Languages</div>
+      <div class="preview-skills-row">English (Fluent) • Marathi (Native) • Hindi (Fluent)</div>
+    `;
+
+    document.getElementById('preview-content').innerHTML = html;
+
+    // Move to download step
+    setTimeout(() => {
+      document.querySelectorAll('.step').forEach((s, i) => {
+        s.classList.remove('active', 'done');
+        if (i < 4) s.classList.add('done');
+        if (i === 4) s.classList.add('active');
+      });
+    }, 100);
+  }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;');
+  }
+
+  // ─── DOWNLOAD ───
+  function downloadFile(format) {
+    window.location.href = `/api/download/${currentSession}/${format}`;
+    showToast(`✓ Downloading ${format.toUpperCase()}...`);
+  }
+
+  // ─── RESET ───
+  async function resetAll() {
+    if (currentSession) {
+      await fetch(`/api/reset/${currentSession}`, { method: 'POST' });
+      currentSession = null;
+    }
+    document.getElementById('json-input').value = '';
+    document.getElementById('role-name').value = '';
+    goToSection('sec-setup', 1);
+    showToast('↺ Reset complete');
+  }
+
+  // ─── UPLOAD TEMPLATE ───
+  async function uploadTemplate() {
+    const file = document.getElementById('upload-file').files[0];
+    const slot = document.getElementById('upload-slot').value;
+    const label = document.getElementById('upload-label').value || slot.replace('_', ' ');
+    if (!file) return;
+
+    document.getElementById('upload-status').textContent = 'Uploading...';
+    const fd = new FormData();
+    fd.append('slot_id', slot);
+    fd.append('label', label);
+    fd.append('file', file);
+
+    const res = await fetch('/api/upload-template', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('upload-status').textContent = `✓ Uploaded as "${data.label}"`;
+      showToast(`✓ Template uploaded to ${slot}`);
+      // Refresh the template dropdown
+      location.reload();
+    } else {
+      document.getElementById('upload-status').textContent = '⚠ Upload failed';
+    }
+  }
+
+  // ─── TOAST ───
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+</script>
+</body>
+</html>
